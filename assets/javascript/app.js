@@ -16,7 +16,7 @@ var database = firebase.database();
 var connections = database.ref("/connections");
 
 // updated when the client's connections state changes - boolean value - true if connected, false if not
-var connected = database.ref(".info/connected");
+// var connected = database.ref(".info/connected");
 
 // player info
 var players = database.ref("/players");
@@ -24,105 +24,10 @@ var players = database.ref("/players");
 // whose turn it is
 var turn = database.ref().child("turn");
 
-var playerOneKey = null;
-var playerTwoKey = null;
-var yourKey = "";
-
 var playerOne = null;
 var playerTwo = null;
 var yourPlayer = "";
 var yourPlayerName = "";
-
-var p1Wins = 0;
-var p1Losses = 0;
-var p1Ties = 0;
-
-var p2Wins = 0;
-var p2Losses = 0;
-var p2Ties = 0;
-
-
-// listen to if there is a connection
-// connected.on("value", function(snapshot) {
-//     // if connected
-//     if (snapshot.val()) {
-//         console.log("connected");
-
-//         // add user to the connections list
-//         var conn = connections.push(true);
-
-//         // remove user when they disconnect
-//         conn.onDisconnect().remove();
-//         // remove the player in players folder
-//         // conn.onDisconnect(function () {
-//         // });
-
-//     } else {
-//         console.log("disconnected");
-//     }
-// });
-
-
-// connections.on("child_added", function(snapshot) { // do I need this????
-//     console.log("child added");
-//     console.log(snapshot.key);
-//     var key = snapshot.key;
-
-//     // don't add them if there are already 2 people here
-//     var numOfChildren = 0;
-//     players.once("value")
-//         .then(function (snapshot) {
-//             numOfChildren = snapshot.numChildren();
-//             console.log(numOfChildren);
-//         });
-//     console.log(numOfChildren);
-
-//     if (numOfChildren <= 2) {
-//         if (!playerOneKey) {
-//             playerOneKey = key;
-//             yourPlayer = "playerOne";
-//             yourKey = playerOneKey;
-
-//         } else if (playerOneKey !== null && !playerTwoKey) {
-//             playerTwoKey = key;
-//             yourPlayer = "playerTwo";
-//             yourKey = playerOneKey;
-
-//         }
-//     }
-
-//     console.log(yourPlayer);
-    
-// });
-
-// connections.on("value", function (snapshot) {
-//     var numChildren = snapshot.numChildren();
-//     console.log("value watch: " + snapshot.key);
-
-//     // if () {}
-
-//     if (numChildren > 2) {
-//         console.log("more than 2 people trying to play");
-//         // code here to hide playing section - show user a "players full - try later" message
-
-
-//         // show sections to play here
-//     } else if (numChildren === 1) {
-//         console.log("only one person here");
-//         // message about "wait for another person to join"
-
-//     } else {
-//         console.log("<= 2 people - let's play!");
-//         // loop through and assign each to player1 or player2
-//         snapshot.forEach(function (childSnapshot) {
-//             var key = childSnapshot.key;
-
-//         });
-//     }
-//     console.log("player1: " + playerOneKey);
-//     console.log("player2: " + playerTwoKey);
-
-// });
 
 
 
@@ -133,34 +38,56 @@ players.on("value", function (playerSnapshot) {
 
         // update page
         $(".player-one-name").text(playerOne.name);
-        $("#p1-wins").text(playerOne.wins);
-        $("#p1-losses").text(playerOne.losses);
-        $("#p1-ties").text(playerOne.ties);
+        // make updated "scores" green for a moment
+        $("#p1-wins").text(playerOne.wins).css("color", "green");
+        $("#p1-losses").text(playerOne.losses).css("color", "green");
+        $("#p1-ties").text(playerOne.ties).css("color", "green");
+
+        // go back to black color after 1 second
+        var timeout = setTimeout(function () {
+            $("#p1-wins").css("color", "black");
+            $("#p1-losses").css("color", "black");
+            $("#p1-ties").css("color", "black");
+        }, 1000);
     }
     
-    if (playerSnapshot.child("player2").exists()) {
+    if (playerSnapshot.hasChild("player2")) {
         playerTwo = playerSnapshot.child("player2").val();
 
         // update page
         $(".player-two-name").text(playerTwo.name);
-        $("#p2-wins").text(playerTwo.wins);
-        $("#p2-losses").text(playerTwo.losses);
-        $("#p2-ties").text(playerTwo.ties);
+        // make updated "scores" green for a moment
+        $("#p2-wins").text(playerTwo.wins).css("color", "green");
+        $("#p2-losses").text(playerTwo.losses).css("color", "green");
+        $("#p2-ties").text(playerTwo.ties).css("color", "green");
+
+        // go back to black color after 1 second
+        var timeout = setTimeout(function () {
+            $("#p2-wins").css("color", "black");
+            $("#p2-losses").css("color", "black");
+            $("#p2-ties").css("color", "black");
+        }, 1000);
     }
+}, function (errorObject) {
+    console.log("an error occurred");
+    console.log(errorObject.code);
 });
 
 
+// players.child("player1").on("value", function (p1snap) {
+
+// })
 
 
+
+// player leaves game
 players.on("child_removed", function (removedSnapshot) {
     console.log("child removed");
 
     var removedPlayer = removedSnapshot.val();
-    console.log(removedPlayer);
-    console.log(playerOne);
+    console.log(removedPlayer.name);
 
-    var removedName = removedSnapshot.val().name;
-
+    // remove name from page
     if (removedPlayer.name === playerOne.name) {
         console.log("player one match");
         // remove player name from html
@@ -171,9 +98,9 @@ players.on("child_removed", function (removedSnapshot) {
         $(".player-two-name").text("waiting for player two");
     }
 
-
-
-
+}, function (errorObject) {
+    console.log("an error occurred");
+    console.log(errorObject.code);
 });
 
 
@@ -189,6 +116,9 @@ turn.on("value", function (turnSnapshot) {
     } else if (turn === 2) {
         $(".player-turn").text("Player Two");
     }
+}, function (errorObject) {
+    console.log("an error occurred");
+    console.log(errorObject.code);
 });
 
 
@@ -298,6 +228,7 @@ $(".p1choice").on("click", function () {
     if (playerOne && playerTwo && (yourPlayer === playerOne.name) && (turn === 1)) {
         var choice = $(this).attr("id");
         playerOne.choice = choice;
+        console.log(choice);
 
         // update DB
         players.child("player1").set(playerOne);
@@ -321,13 +252,10 @@ $(".p2choice").on("click", function () {
     if (playerOne && playerTwo && (yourPlayer === playerTwo.name) && (turn === 2)) {
         var choice = $(this).attr("id");
         playerTwo.choice = choice;
+        console.log(choice);
 
         // update DB
         players.child("player2").set(playerTwo);
-
-        // change turn
-        turn = 1;
-        database.ref().child("turn").set(turn);
 
         // then
         // DECIDE WINNER
@@ -337,19 +265,34 @@ $(".p2choice").on("click", function () {
             console.log("tie");
             playerOne.ties++;
             playerTwo.ties++;
+            $("#message").text("It's a tie.");
         } else if ((playerOne.choice === "rock" && playerTwo.choice === "scissors") || playerOne.choice === "scissors" && playerTwo.choice === "paper" || playerOne.choice === "paper" && playerTwo.choice === "rock") {
             console.log("player 1 wins this round");
             playerOne.wins++;
+            playerTwo.losses++;
+            $("#message").text("Player One Wins!");
         } else {
             console.log("player 2 wins this round");
             playerTwo.wins++;
+            playerOne.losses++;
+            $("#message").text("Player Two Wins!");
         }
+        console.log(playerTwo);
 
         // clear choices for next round
-        playerOne.choice = "";
-        playerTwo.choice = "";
-        players.child("player1").set(playerOne);
-        players.child("player2").set(playerTwo);
+        // playerOne.choice = "";  // why does removing this, make player 2 work again?
+        // playerTwo.choice = "";
+        console.log(playerTwo);
+        players.set({
+            player1: playerOne,
+            player2: playerTwo
+        });
+        console.log(playerTwo);
+
+
+        // change turn
+        turn = 1;
+        database.ref().child("turn").set(turn);
     }
 
 })

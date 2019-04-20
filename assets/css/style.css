@@ -10,3 +10,7 @@ img {
 .player {
     border: 2px solid blue;
 }
+
+#message {
+    color: green;
+}
